@@ -1,0 +1,68 @@
+"""
+src/load.py
+-----------
+Responsible for loading the raw CSV and performing basic validation.
+"""
+
+from __future__ import annotations
+
+import os
+import pandas as pd
+
+
+EXPECTED_COLUMNS = {
+    "show_id", "type", "title", "director", "cast",
+    "country", "date_added", "release_year", "rating",
+    "duration", "listed_in", "description",
+}
+
+
+def load_data(filepath: str) -> pd.DataFrame:
+    """Load the Netflix titles CSV and return a DataFrame.
+
+    Parameters
+    ----------
+    filepath : str
+        Path to ``netflix_titles.csv``.
+
+    Returns
+    -------
+    pd.DataFrame
+        Raw, unmodified DataFrame.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the file does not exist at *filepath*.
+    ValueError
+        If required columns are missing.
+    """
+    if not os.path.exists(filepath):
+        raise FileNotFoundError(f"Dataset not found: {filepath}")
+
+    df = pd.read_csv(filepath)
+    _validate_columns(df)
+    return df
+
+
+def _validate_columns(df: pd.DataFrame) -> None:
+    """Raise ValueError if expected columns are absent."""
+    missing = EXPECTED_COLUMNS - set(df.columns)
+    if missing:
+        raise ValueError(f"Missing columns in dataset: {missing}")
+
+
+def dataset_summary(df: pd.DataFrame) -> None:
+    """Print a quick summary of shape, dtypes, and nulls."""
+    print("=" * 50)
+    print("DATASET OVERVIEW")
+    print("=" * 50)
+    print(f"  Rows       : {df.shape[0]:,}")
+    print(f"  Columns    : {df.shape[1]}")
+    print()
+    print("Missing values per column:")
+    null_counts = df.isnull().sum()
+    null_pct = (null_counts / len(df) * 100).round(1)
+    summary = pd.DataFrame({"nulls": null_counts, "pct": null_pct})
+    print(summary[summary["nulls"] > 0].to_string())
+    print("=" * 50)
